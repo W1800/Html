@@ -1,164 +1,286 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Phone Guard</title>
+<meta charset="UTF-8">
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #080808;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
+<title>Phone Guard</title>
 
-    .app {
-      width: 100%;
-      max-width: 700px;
-      text-align: center;
-    }
+<style>
 
-    h1 {
-      margin-bottom: 8px;
-    }
+*{
+box-sizing:border-box;
+}
 
-    .description {
-      color: #aaa;
-      margin-bottom: 20px;
-    }
+body{
 
-    .camera {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 10;
-      background: #111;
-      border-radius: 20px;
-      overflow: hidden;
-      border: 2px solid #333;
-    }
+margin:0;
 
-    video,
-    canvas {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      inset: 0;
-      object-fit: cover;
-    }
+min-height:100vh;
 
-    video {
-      transform: scaleX(-1);
-    }
+background:#07090d;
 
-    canvas {
-      pointer-events: none;
-      transform: scaleX(-1);
-    }
+color:white;
 
-    .status {
-      margin-top: 15px;
-      padding: 18px;
-      border-radius: 15px;
-      background: #12351f;
-      border: 1px solid #286b3c;
-    }
+font-family:Arial,sans-serif;
 
-    .status.alarm {
-      background: #451414;
-      border-color: #ff3030;
-      animation: danger 0.5s infinite alternate;
-    }
+display:flex;
 
-    .status-title {
-      font-size: 24px;
-      font-weight: bold;
-    }
+justify-content:center;
 
-    .status-text {
-      margin-top: 7px;
-      color: #ccc;
-    }
+align-items:center;
 
-    button {
-      margin-top: 15px;
-      padding: 14px 25px;
-      border: none;
-      border-radius: 12px;
-      background: white;
-      color: black;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+padding:18px;
 
-    button:disabled {
-      opacity: 0.5;
-    }
+}
 
-    .loading {
-      margin-top: 12px;
-      color: #aaa;
-      font-size: 14px;
-    }
+.app{
 
-    @keyframes danger {
-      from {
-        transform: scale(1);
-      }
+width:100%;
 
-      to {
-        transform: scale(1.02);
-      }
-    }
-  </style>
+max-width:760px;
+
+text-align:center;
+
+}
+
+h1{
+
+margin:0 0 8px;
+
+font-size:30px;
+
+}
+
+.description{
+
+color:#aeb5c2;
+
+margin:0 0 18px;
+
+}
+
+.camera{
+
+position:relative;
+
+width:100%;
+
+aspect-ratio:16/10;
+
+background:#000;
+
+border-radius:20px;
+
+overflow:hidden;
+
+border:2px solid #292f3a;
+
+}
+
+video{
+
+position:absolute;
+
+inset:0;
+
+width:100%;
+
+height:100%;
+
+object-fit:cover;
+
+transform:scaleX(-1);
+
+}
+
+canvas{
+
+position:absolute;
+
+inset:0;
+
+width:100%;
+
+height:100%;
+
+pointer-events:none;
+
+}
+
+.status{
+
+margin-top:15px;
+
+padding:18px;
+
+border-radius:15px;
+
+background:#12351f;
+
+border:1px solid #2c6b40;
+
+transition:.2s;
+
+}
+
+.status.alarm{
+
+background:#461416;
+
+border-color:#ff3030;
+
+animation:alarmFlash .5s infinite alternate;
+
+}
+
+.title{
+
+font-size:24px;
+
+font-weight:bold;
+
+}
+
+.text{
+
+margin-top:7px;
+
+color:#d0d5dd;
+
+}
+
+button{
+
+margin-top:15px;
+
+padding:14px 26px;
+
+border:0;
+
+border-radius:12px;
+
+background:white;
+
+color:#111;
+
+font-size:17px;
+
+font-weight:bold;
+
+cursor:pointer;
+
+}
+
+button:disabled{
+
+opacity:.5;
+
+}
+
+.loading{
+
+margin-top:12px;
+
+font-size:14px;
+
+color:#aeb5c2;
+
+}
+
+@keyframes alarmFlash{
+
+from{
+
+transform:scale(1);
+
+}
+
+to{
+
+transform:scale(1.02);
+
+}
+
+}
+
+</style>
+
 </head>
+
 
 <body>
 
+
 <div class="app">
 
-  <h1>📱 Phone Guard</h1>
 
-  <p class="description">
-    النظام يراقب الجوال ويحاول اكتشاف اقترابه من الأذن.
-  </p>
+<h1>📱 Phone Guard</h1>
 
-  <div class="camera">
 
-    <video id="camera" autoplay muted playsinline></video>
+<p class="description">
 
-    <canvas id="overlay"></canvas>
+إذا اقترب الجوال من أذنك يصدر النظام إنذارًا.
 
-  </div>
+</p>
 
-  <div id="status" class="status">
 
-    <div id="statusTitle" class="status-title">
-      🟢 الوضع الطبيعي
-    </div>
+<div class="camera">
 
-    <div id="statusText" class="status-text">
-      اضغط بدء المراقبة للسماح باستخدام الكاميرا.
-    </div>
+<video
+id="camera"
+autoplay
+muted
+playsinline>
+</video>
 
-  </div>
 
-  <button id="startButton">
-    بدء المراقبة
-  </button>
+<canvas id="overlay"></canvas>
 
-  <div id="loading" class="loading"></div>
+</div>
+
+
+<div
+id="status"
+class="status">
+
+<div
+id="statusTitle"
+class="title">
+
+🟢 الوضع الطبيعي
+
+</div>
+
+
+<div
+id="statusText"
+class="text">
+
+اضغط بدء المراقبة.
+
+</div>
+
+</div>
+
+
+<button
+id="startButton">
+
+بدء المراقبة
+
+</button>
+
+
+<div
+id="loading"
+class="loading">
+</div>
+
 
 </div>
 
@@ -167,689 +289,1058 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 
-<!-- COCO-SSD -->
+
+<!-- COCO SSD -->
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
 
 
+<!-- MediaPipe Face Mesh -->
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+
+
 <script>
 
-const video = document.getElementById("camera");
-const canvas = document.getElementById("overlay");
-const ctx = canvas.getContext("2d");
 
-const startButton = document.getElementById("startButton");
+const video =
+document.getElementById("camera");
 
-const statusBox = document.getElementById("status");
-const statusTitle = document.getElementById("statusTitle");
-const statusText = document.getElementById("statusText");
 
-const loading = document.getElementById("loading");
+const canvas =
+document.getElementById("overlay");
 
-let model = null;
+
+const ctx =
+canvas.getContext("2d");
+
+
+const startButton =
+document.getElementById("startButton");
+
+
+const statusBox =
+document.getElementById("status");
+
+
+const statusTitle =
+document.getElementById("statusTitle");
+
+
+const statusText =
+document.getElementById("statusText");
+
+
+const loading =
+document.getElementById("loading");
+
+
+let phoneModel = null;
+
+let faceMesh = null;
+
 let stream = null;
+
 let running = false;
+
+let processing = false;
+
+let lastFace = null;
 
 let alarmActive = false;
 
-let nearCounter = 0;
-let safeCounter = 0;
+let nearFrames = 0;
+
+let safeFrames = 0;
 
 
-/* =========================
-   تغيير حالة الموقع
-========================= */
+/* ==========================
+   الحالة الطبيعية
+========================== */
 
-function normalStatus(text) {
+function normalStatus(message){
 
-  statusBox.classList.remove("alarm");
+statusBox.classList.remove("alarm");
 
-  statusTitle.textContent = "🟢 الوضع الطبيعي";
+statusTitle.textContent =
+"🟢 الوضع الطبيعي";
 
-  statusText.textContent = text;
+statusText.textContent =
+message;
+
 }
 
 
-function alarmStatus() {
+/* ==========================
+   الإنذار
+========================== */
 
-  statusBox.classList.add("alarm");
+function alarmStatus(){
 
-  statusTitle.textContent = "🚨 إنذار!";
+statusBox.classList.add("alarm");
 
-  statusText.textContent =
-    "الجوال قريب جدًا من الأذن — أبعد الجوال.";
+statusTitle.textContent =
+"🚨 إنذار!";
+
+statusText.textContent =
+"الجوال قريب من أذنك — أبعد الجوال.";
+
 }
 
 
-/* =========================
+/* ==========================
    صوت الإنذار
-========================= */
+========================== */
 
-function alarmSound() {
+function alarmSound(){
 
-  const AudioContext =
-    window.AudioContext ||
-    window.webkitAudioContext;
+const AudioContext =
+window.AudioContext ||
+window.webkitAudioContext;
 
-  if (!AudioContext) return;
+if(!AudioContext){
 
-  const audio = new AudioContext();
+return;
 
-  const oscillator = audio.createOscillator();
+}
 
-  const gain = audio.createGain();
+const audio =
+new AudioContext();
 
-  oscillator.type = "square";
+const oscillator =
+audio.createOscillator();
 
-  oscillator.frequency.value = 900;
+const gain =
+audio.createGain();
 
-  gain.gain.value = 0.15;
 
-  oscillator.connect(gain);
+oscillator.type =
+"square";
 
-  gain.connect(audio.destination);
 
-  oscillator.start();
+oscillator.frequency.setValueAtTime(
+850,
+audio.currentTime
+);
 
-  oscillator.stop(audio.currentTime + 0.5);
+
+oscillator.frequency.setValueAtTime(
+1050,
+audio.currentTime + 0.18
+);
+
+
+gain.gain.setValueAtTime(
+0.0001,
+audio.currentTime
+);
+
+
+gain.gain.exponentialRampToValueAtTime(
+0.2,
+audio.currentTime + 0.03
+);
+
+
+gain.gain.exponentialRampToValueAtTime(
+0.0001,
+audio.currentTime + 0.45
+);
+
+
+oscillator.connect(gain);
+
+gain.connect(audio.destination);
+
+
+oscillator.start();
+
+oscillator.stop(
+audio.currentTime + 0.5
+);
+
+
+setTimeout(
+()=>{
+audio.close();
+},
+700
+);
 
 }
 
 
-/* =========================
-   صوت الوضع الطبيعي
-========================= */
+/* ==========================
+   صوت الرجوع للطبيعي
+========================== */
 
-function safeSound() {
+function safeSound(){
 
-  const AudioContext =
-    window.AudioContext ||
-    window.webkitAudioContext;
+const AudioContext =
+window.AudioContext ||
+window.webkitAudioContext;
 
-  if (!AudioContext) return;
+if(!AudioContext){
 
-  const audio = new AudioContext();
+return;
 
-  const oscillator = audio.createOscillator();
+}
 
-  const gain = audio.createGain();
+const audio =
+new AudioContext();
 
-  oscillator.type = "sine";
+const oscillator =
+audio.createOscillator();
 
-  oscillator.frequency.value = 450;
+const gain =
+audio.createGain();
 
-  gain.gain.value = 0.08;
 
-  oscillator.connect(gain);
+oscillator.type =
+"sine";
 
-  gain.connect(audio.destination);
 
-  oscillator.start();
+oscillator.frequency.value =
+440;
 
-  oscillator.stop(audio.currentTime + 0.25);
+
+gain.gain.value =
+0.06;
+
+
+oscillator.connect(gain);
+
+gain.connect(audio.destination);
+
+
+oscillator.start();
+
+oscillator.stop(
+audio.currentTime + 0.2
+);
+
+
+setTimeout(
+()=>{
+audio.close();
+},
+500
+);
 
 }
 
 
-/* =========================
-   اهتزاز الهاتف
-========================= */
+/* ==========================
+   اهتزاز
+========================== */
 
-function vibrate() {
+function vibrate(){
 
-  if ("vibrate" in navigator) {
+if(
+navigator.vibrate
+){
 
-    navigator.vibrate([
-      300,
-      100,
-      300,
-      100,
-      500
-    ]);
+navigator.vibrate([
+250,
+100,
+250,
+100,
+450
+]);
 
-  }
+}
 
 }
 
 
-/* =========================
+/* ==========================
    تشغيل الإنذار
-========================= */
+========================== */
 
-function activateAlarm() {
+function activateAlarm(){
 
-  if (alarmActive) return;
+if(alarmActive){
 
-  alarmActive = true;
+return;
 
-  alarmStatus();
+}
 
-  alarmSound();
+alarmActive =
+true;
 
-  vibrate();
+alarmStatus();
+
+alarmSound();
+
+vibrate();
 
 }
 
 
-/* =========================
+/* ==========================
    إيقاف الإنذار
-========================= */
+========================== */
 
-function deactivateAlarm() {
+function deactivateAlarm(){
 
-  if (!alarmActive) return;
+if(!alarmActive){
 
-  alarmActive = false;
+return;
 
-  safeSound();
+}
+
+alarmActive =
+false;
+
+safeSound();
+
+normalStatus(
+"الجوال بعيد عن الأذن."
+);
 
 }
 
 
-/* =========================
-   رسم المربعات
-========================= */
+/* ==========================
+   الحصول على نقطة
+========================== */
 
-function drawBox(box, text, color) {
+function point(
+landmark
+){
 
-  if (!box) return;
+return{
 
-  const x = box[0];
-  const y = box[1];
+x:
+landmark.x *
+canvas.width,
 
-  const width = box[2];
-  const height = box[3];
+y:
+landmark.y *
+canvas.height
 
-  ctx.strokeStyle = color;
-
-  ctx.lineWidth = 4;
-
-  ctx.strokeRect(
-    x,
-    y,
-    width,
-    height
-  );
-
-  ctx.fillStyle = color;
-
-  ctx.font = "bold 22px Arial";
-
-  ctx.fillText(
-    text,
-    x,
-    Math.max(25, y - 8)
-  );
+};
 
 }
 
 
-/* =========================
-   تحديد منطقة الأذن
-========================= */
+/* ==========================
+   حساب المسافة
+========================== */
 
-function phoneNearEar(phone, face) {
+function distance(
+a,
+b
+){
 
-  if (!phone || !face) {
-    return false;
-  }
+return Math.sqrt(
 
-  const fx = face[0];
-  const fy = face[1];
+Math.pow(
+a.x-b.x,
+2
+)
 
-  const fw = face[2];
-  const fh = face[3];
++
 
-  const px = phone[0];
-  const py = phone[1];
+Math.pow(
+a.y-b.y,
+2
+)
 
-  const pw = phone[2];
-  const ph = phone[3];
-
-
-  /* مركز الجوال */
-
-  const phoneX =
-    px + pw / 2;
-
-  const phoneY =
-    py + ph / 2;
-
-
-  /*
-    تقدير مكان الأذنين
-    بالنسبة إلى الوجه
-  */
-
-  const leftEarX =
-    fx + fw * 0.08;
-
-  const rightEarX =
-    fx + fw * 0.92;
-
-  const earY =
-    fy + fh * 0.55;
-
-
-  const distanceLeft =
-    Math.sqrt(
-      Math.pow(
-        (phoneX - leftEarX) / fw,
-        2
-      ) +
-      Math.pow(
-        (phoneY - earY) / fh,
-        2
-      )
-    );
-
-
-  const distanceRight =
-    Math.sqrt(
-      Math.pow(
-        (phoneX - rightEarX) / fw,
-        2
-      ) +
-      Math.pow(
-        (phoneY - earY) / fh,
-        2
-      )
-    );
-
-
-  const distance =
-    Math.min(
-      distanceLeft,
-      distanceRight
-    );
-
-
-  /*
-    يجب أن يكون الجوال
-    قريبًا من الوجه
-  */
-
-  return distance < 0.32;
+);
 
 }
 
 
-/* =========================
-   تحليل الوجه
-========================= */
+/* ==========================
+   تحديد الأذن
+========================== */
 
-async function detectFace() {
+function getEarPoints(
+landmarks
+){
 
-  /*
-    FaceDetector متوفر
-    في بعض المتصفحات فقط.
-  */
+/*
 
-  if ("FaceDetector" in window) {
+MediaPipe Face Mesh
 
-    try {
+نقاط جانبي الوجه:
 
-      const detector =
-        new FaceDetector({
-          fastMode: true,
-          maxDetectedFaces: 1
-        });
+234 = جانب الوجه الأيسر
 
-      const faces =
-        await detector.detect(video);
+454 = جانب الوجه الأيمن
 
-      if (faces.length > 0) {
+127 = منطقة الصدغ اليسرى
 
-        const r =
-          faces[0].boundingBox;
+356 = منطقة الصدغ اليمنى
 
-        return [
-          r.x,
-          r.y,
-          r.width,
-          r.height
-        ];
+*/
 
-      }
-
-    } catch (error) {
-
-      console.log(
-        "FaceDetector غير متوفر"
-      );
-
-    }
-
-  }
+const leftSide =
+point(
+landmarks[234]
+);
 
 
-  /*
-    تقدير احتياطي للوجه.
-    سيتم تحسينه لاحقًا باستخدام
-    Face Landmarks.
-  */
+const rightSide =
+point(
+landmarks[454]
+);
 
-  return [
-    canvas.width * 0.25,
-    canvas.height * 0.08,
-    canvas.width * 0.50,
-    canvas.height * 0.72
-  ];
+
+const leftTemple =
+point(
+landmarks[127]
+);
+
+
+const rightTemple =
+point(
+landmarks[356]
+);
+
+
+/*
+
+نحسب نقطة تقريبية
+لمركز منطقة الأذن.
+
+*/
+
+const leftEar = {
+
+x:
+(leftSide.x * 0.65) +
+(leftTemple.x * 0.35),
+
+y:
+(leftSide.y * 0.65) +
+(leftTemple.y * 0.35)
+
+};
+
+
+const rightEar = {
+
+x:
+(rightSide.x * 0.65) +
+(rightTemple.x * 0.35),
+
+y:
+(rightSide.y * 0.65) +
+(rightTemple.y * 0.35)
+
+};
+
+
+return{
+
+left:leftEar,
+
+right:rightEar
+
+};
 
 }
 
 
-/* =========================
-   تحليل الكاميرا
-========================= */
+/* ==========================
+   التحقق من الجوال
+========================== */
 
-async function analyze() {
+function phoneNearEar(
+phone,
+landmarks
+){
 
-  if (!running) return;
+if(
+!phone ||
+!landmarks
+){
 
-  try {
-
-    const predictions =
-      await model.detect(
-        video,
-        10
-      );
-
-
-    /*
-      البحث عن الجوال
-    */
-
-    const phones =
-      predictions.filter(
-        item =>
-          item.class === "cell phone" &&
-          item.score >= 0.40
-      );
-
-
-    let phone = null;
-
-    if (phones.length > 0) {
-
-      phones.sort(
-        (a, b) =>
-          b.score - a.score
-      );
-
-      phone =
-        phones[0].bbox;
-
-    }
-
-
-    /*
-      البحث عن الوجه
-    */
-
-    const face =
-      await detectFace();
-
-
-    /*
-      مسح الرسم السابق
-    */
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-
-    /*
-      رسم الوجه
-    */
-
-    drawBox(
-      face,
-      "FACE",
-      "#00ff88"
-    );
-
-
-    /*
-      إذا وجد الجوال
-    */
-
-    if (phone) {
-
-      const near =
-        phoneNearEar(
-          phone,
-          face
-        );
-
-
-      if (near) {
-
-        drawBox(
-          phone,
-          "PHONE NEAR EAR",
-          "#ff2222"
-        );
-
-
-        nearCounter++;
-
-        safeCounter = 0;
-
-
-        /*
-          لا يشغل الإنذار
-          من أول إطار حتى لا
-          تحدث إنذارات خاطئة.
-        */
-
-        if (nearCounter >= 3) {
-
-          activateAlarm();
-
-        }
-
-
-      } else {
-
-        drawBox(
-          phone,
-          "PHONE",
-          "#ffff00"
-        );
-
-
-        safeCounter++;
-
-        nearCounter = 0;
-
-
-        if (safeCounter >= 4) {
-
-          deactivateAlarm();
-
-          normalStatus(
-            "تم اكتشاف الجوال وهو بعيد عن الأذن."
-          );
-
-        }
-
-      }
-
-    } else {
-
-      safeCounter++;
-
-      nearCounter = 0;
-
-      deactivateAlarm();
-
-      normalStatus(
-        "لم يتم اكتشاف الجوال بوضوح."
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-  }
-
-
-  /*
-    استمرار التحليل
-  */
-
-  if (running) {
-
-    setTimeout(
-      analyze,
-      250
-    );
-
-  }
+return false;
 
 }
 
 
-/* =========================
-   بدء النظام
-========================= */
+const phoneCenter = {
 
-async function startSystem() {
+x:
+phone[0] +
+phone[2]/2,
 
-  if (running) return;
+y:
+phone[1] +
+phone[3]/2
 
-  try {
-
-    startButton.disabled = true;
-
-    loading.textContent =
-      "جارٍ تشغيل الكاميرا...";
+};
 
 
-    /*
-      طلب الكاميرا
-    */
-
-    stream =
-      await navigator.mediaDevices.getUserMedia({
-
-        video: {
-
-          facingMode: "user",
-
-          width: {
-            ideal: 1280
-          },
-
-          height: {
-            ideal: 720
-          }
-
-        },
-
-        audio: false
-
-      });
+const ears =
+getEarPoints(
+landmarks
+);
 
 
-    video.srcObject = stream;
+const dLeft =
+distance(
+phoneCenter,
+ears.left
+);
 
 
-    await video.play();
+const dRight =
+distance(
+phoneCenter,
+ears.right
+);
 
 
-    /*
-      ضبط حجم Canvas
-    */
+const faceWidth =
+Math.abs(
 
-    canvas.width =
-      video.videoWidth || 1280;
+point(
+landmarks[454]
+).x
 
-    canvas.height =
-      video.videoHeight || 720;
+-
 
+point(
+landmarks[234]
+).x
 
-    loading.textContent =
-      "جارٍ تحميل نموذج اكتشاف الجوال...";
-
-
-    /*
-      تحميل نموذج الذكاء الاصطناعي
-    */
-
-    model =
-      await cocoSsd.load();
+);
 
 
-    running = true;
+/*
+
+نسبة المسافة إلى حجم الوجه.
+
+*/
+
+const normalizedLeft =
+dLeft /
+faceWidth;
 
 
-    loading.textContent =
-      "النظام يعمل الآن.";
+const normalizedRight =
+dRight /
+faceWidth;
 
 
-    startButton.textContent =
-      "المراقبة تعمل";
+const nearest =
+Math.min(
+normalizedLeft,
+normalizedRight
+);
 
 
-    normalStatus(
-      "وجّه الكاميرا نحوك مع ظهور الجوال."
-    );
+/*
 
+يعتبر الجوال قريبًا
+إذا كان ضمن هذه المنطقة.
 
-    analyze();
+*/
 
-
-  } catch (error) {
-
-    console.error(error);
-
-    startButton.disabled = false;
-
-
-    loading.textContent =
-      "تعذر تشغيل الكاميرا.";
-
-
-    if (
-      error.name ===
-      "NotAllowedError"
-    ) {
-
-      normalStatus(
-        "يجب السماح للموقع باستخدام الكاميرا."
-      );
-
-    } else {
-
-      normalStatus(
-        "حدث خطأ أثناء تشغيل النظام."
-      );
-
-    }
-
-  }
+return nearest < 0.38;
 
 }
 
 
-/* =========================
+/* ==========================
+   رسم منطقة الأذن
+========================== */
+
+function drawEarPoint(
+p,
+color
+){
+
+ctx.beginPath();
+
+ctx.arc(
+p.x,
+p.y,
+9,
+0,
+Math.PI*2
+);
+
+ctx.fillStyle =
+color;
+
+ctx.fill();
+
+}
+
+
+/* ==========================
+   MediaPipe
+========================== */
+
+function onFaceResults(
+results
+){
+
+if(
+!results.multiFaceLandmarks ||
+results.multiFaceLandmarks.length === 0
+){
+
+lastFace =
+null;
+
+return;
+
+}
+
+
+lastFace =
+results.multiFaceLandmarks[0];
+
+}
+
+
+/* ==========================
+   التحليل
+========================== */
+
+async function analyze(){
+
+if(
+!running ||
+processing
+){
+
+return;
+
+}
+
+
+processing =
+true;
+
+
+try{
+
+
+const predictions =
+await phoneModel.detect(
+video,
+8
+);
+
+
+const phones =
+predictions.filter(
+item =>
+
+item.class ===
+"cell phone"
+
+&&
+
+item.score >=
+0.40
+);
+
+
+let phone =
+null;
+
+
+if(
+phones.length
+){
+
+phones.sort(
+(a,b)=>
+b.score-a.score
+);
+
+phone =
+phones[0].bbox;
+
+}
+
+
+/*
+
+إرسال الصورة إلى
+Face Mesh.
+
+*/
+
+await faceMesh.send({
+image:video
+});
+
+
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
+
+
+if(
+lastFace
+){
+
+const ears =
+getEarPoints(
+lastFace
+);
+
+
+drawEarPoint(
+ears.left,
+"#00ff88"
+);
+
+
+drawEarPoint(
+ears.right,
+"#00ff88"
+);
+
+
+if(
+phone
+){
+
+const near =
+phoneNearEar(
+phone,
+lastFace
+);
+
+
+ctx.strokeStyle =
+near
+?
+"#ff2222"
+:
+"#ffff00";
+
+
+ctx.lineWidth =
+5;
+
+
+ctx.strokeRect(
+phone[0],
+phone[1],
+phone[2],
+phone[3]
+);
+
+
+if(
+near
+){
+
+nearFrames++;
+
+safeFrames =
+0;
+
+
+if(
+nearFrames >= 4
+){
+
+activateAlarm();
+
+}
+
+
+normalStatus(
+"⚠️ الجوال يقترب من منطقة الأذن..."
+);
+
+
+if(
+alarmActive
+){
+
+alarmStatus();
+
+}
+
+
+}else{
+
+nearFrames =
+Math.max(
+0,
+nearFrames-1
+);
+
+safeFrames++;
+
+
+if(
+safeFrames >= 5
+){
+
+deactivateAlarm();
+
+normalStatus(
+"🟢 الجوال بعيد عن الأذن."
+);
+
+}
+
+}
+
+}else{
+
+safeFrames++;
+
+nearFrames =
+0;
+
+
+deactivateAlarm();
+
+
+normalStatus(
+"🟢 الوضع طبيعي — الجوال غير ظاهر."
+);
+
+}
+
+}else{
+
+safeFrames++;
+
+nearFrames =
+0;
+
+
+deactivateAlarm();
+
+
+normalStatus(
+"🟢 الوجه غير واضح. اجعل وجهك والجوال ظاهرين."
+);
+
+}
+
+
+}catch(error){
+
+console.error(
+error
+);
+
+}
+
+
+processing =
+false;
+
+
+if(running){
+
+setTimeout(
+analyze,
+180
+);
+
+}
+
+}
+
+
+/* ==========================
+   بدء الكاميرا
+========================== */
+
+async function startSystem(){
+
+if(running){
+
+return;
+
+}
+
+
+try{
+
+
+startButton.disabled =
+true;
+
+
+loading.textContent =
+"جارٍ تشغيل الكاميرا...";
+
+
+stream =
+await navigator.mediaDevices.getUserMedia({
+
+video:{
+
+facingMode:
+"user",
+
+width:{
+ideal:1280
+},
+
+height:{
+ideal:720
+}
+
+},
+
+audio:false
+
+});
+
+
+video.srcObject =
+stream;
+
+
+await video.play();
+
+
+canvas.width =
+video.videoWidth ||
+1280;
+
+
+canvas.height =
+video.videoHeight ||
+720;
+
+
+/*
+
+تحميل نموذج الجوال.
+
+*/
+
+loading.textContent =
+"جارٍ تحميل نظام اكتشاف الجوال...";
+
+
+phoneModel =
+await cocoSsd.load();
+
+
+/*
+
+تشغيل Face Mesh.
+
+*/
+
+loading.textContent =
+"جارٍ تحميل نظام تحديد الوجه والأذن...";
+
+
+faceMesh =
+new FaceMesh({
+
+locateFile:
+file =>
+`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+
+});
+
+
+faceMesh.setOptions({
+
+maxNumFaces:1,
+
+refineLandmarks:true,
+
+minDetectionConfidence:0.6,
+
+minTrackingConfidence:0.6
+
+});
+
+
+faceMesh.onResults(
+onFaceResults
+);
+
+
+running =
+true;
+
+
+loading.textContent =
+"النظام يعمل.";
+
+
+startButton.textContent =
+"المراقبة تعمل";
+
+
+normalStatus(
+"🟢 وجّه الكاميرا نحو وجهك والجوال."
+);
+
+
+analyze();
+
+
+}catch(error){
+
+console.error(
+error
+);
+
+
+startButton.disabled =
+false;
+
+
+loading.textContent =
+"تعذر تشغيل النظام.";
+
+
+if(
+error.name ===
+"NotAllowedError"
+){
+
+normalStatus(
+"يجب السماح للموقع باستخدام الكاميرا."
+);
+
+}else{
+
+normalStatus(
+"حدث خطأ أثناء تشغيل الكاميرا."
+);
+
+}
+
+}
+
+}
+
+
+/* ==========================
    زر البداية
-========================= */
+========================== */
 
 startButton.addEventListener(
-  "click",
-  startSystem
+"click",
+startSystem
 );
+
 
 </script>
 
+
 </body>
+
 </html>
