@@ -1,11 +1,855 @@
-<DOCTYPE HTML!>
-  <html>
-    <head>
-      <meta charset=`utf-8`>
-      <title> موقع الوليد </title>
-      <body>
-        <h1> متجر الوليد </h1>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Phone Guard</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #080808;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 700px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .description {
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+
+    .camera {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: #111;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #333;
+    }
+
+    video,
+    canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      inset: 0;
+      object-fit: cover;
+    }
+
+    video {
+      transform: scaleX(-1);
+    }
+
+    canvas {
+      pointer-events: none;
+      transform: scaleX(-1);
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 18px;
+      border-radius: 15px;
+      background: #12351f;
+      border: 1px solid #286b3c;
+    }
+
+    .status.alarm {
+      background: #451414;
+      border-color: #ff3030;
+      animation: danger 0.5s infinite alternate;
+    }
+
+    .status-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .status-text {
+      margin-top: 7px;
+      color: #ccc;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 14px 25px;
+      border: none;
+      border-radius: 12px;
+      background: white;
+      color: black;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+    }
+
+    .loading {
+      margin-top: 12px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    @keyframes danger {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.02);
+      }
+    }
+  </style>
+</head>
+
 <body>
-  <green>
-        <p> مرحبا بكم</p>
+
+<div class="app">
+
+  <h1>📱 Phone Guard</h1>
+
+  <p class="description">
+    النظام يراقب الجوال ويحاول اكتشاف اقترابه من الأذن.
+  </p>
+
+  <div class="camera">
+
+    <video id="camera" autoplay muted playsinline></video>
+
+    <canvas id="overlay"></canvas>
+
+  </div>
+
+  <div id="status" class="status">
+
+    <div id="statusTitle" class="status-title">
+      🟢 الوضع الطبيعي
+    </div>
+
+    <div id="statusText" class="status-text">
+      اضغط بدء المراقبة للسماح باستخدام الكاميرا.
+    </div>
+
+  </div>
+
+  <button id="startButton">
+    بدء المراقبة
+  </button>
+
+  <div id="loading" class="loading"></div>
+
+</div>
+
+
+<!-- TensorFlow -->
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+
+<!-- COCO-SSD -->
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+
+<script>
+
+const video = document.getElementById("camera");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
+
+const startButton = document.getElementById("startButton");
+
+const statusBox = document.getElementById("status");
+const statusTitle = document.getElementById("statusTitle");
+const statusText = document.getElementById("statusText");
+
+const loading = document.getElementById("loading");
+
+let model = null;
+let stream = null;
+let running = false;
+
+let alarmActive = false;
+
+let nearCounter = 0;
+let safeCounter = 0;
+
+
+/* =========================
+   تغيير حالة الموقع
+========================= */
+
+function normalStatus(text) {
+
+  statusBox.classList.remove("alarm");
+
+  statusTitle.textContent = "🟢 الوضع الطبيعي";
+
+  statusText.textContent = text;
+}
+
+
+function alarmStatus() {
+
+  statusBox.classList.add("alarm");
+
+  statusTitle.textContent = "🚨 إنذار!";
+
+  statusText.textContent =
+    "الجوال قريب جدًا من الأذن — أبعد الجوال.";
+}
+
+
+/* =========================
+   صوت الإنذار
+========================= */
+
+function alarmSound() {
+
+  const AudioContext =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if (!AudioContext) return;
+
+  const audio = new AudioContext();
+
+  const oscillator = audio.createOscillator();
+
+  const gain = audio.createGain();
+
+  oscillator.type = "square";
+
+  oscillator.frequency.value = 900;
+
+  gain.gain.value = 0.15;
+
+  oscillator.connect(gain);
+
+  gain.connect(audio.destination);
+
+  oscillator.start();
+
+  oscillator.stop(audio.currentTime + 0.5);
+
+}
+
+
+/* =========================
+   صوت الوضع الطبيعي
+========================= */
+
+function safeSound() {
+
+  const AudioContext =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if (!AudioContext) return;
+
+  const audio = new AudioContext();
+
+  const oscillator = audio.createOscillator();
+
+  const gain = audio.createGain();
+
+  oscillator.type = "sine";
+
+  oscillator.frequency.value = 450;
+
+  gain.gain.value = 0.08;
+
+  oscillator.connect(gain);
+
+  gain.connect(audio.destination);
+
+  oscillator.start();
+
+  oscillator.stop(audio.currentTime + 0.25);
+
+}
+
+
+/* =========================
+   اهتزاز الهاتف
+========================= */
+
+function vibrate() {
+
+  if ("vibrate" in navigator) {
+
+    navigator.vibrate([
+      300,
+      100,
+      300,
+      100,
+      500
+    ]);
+
+  }
+
+}
+
+
+/* =========================
+   تشغيل الإنذار
+========================= */
+
+function activateAlarm() {
+
+  if (alarmActive) return;
+
+  alarmActive = true;
+
+  alarmStatus();
+
+  alarmSound();
+
+  vibrate();
+
+}
+
+
+/* =========================
+   إيقاف الإنذار
+========================= */
+
+function deactivateAlarm() {
+
+  if (!alarmActive) return;
+
+  alarmActive = false;
+
+  safeSound();
+
+}
+
+
+/* =========================
+   رسم المربعات
+========================= */
+
+function drawBox(box, text, color) {
+
+  if (!box) return;
+
+  const x = box[0];
+  const y = box[1];
+
+  const width = box[2];
+  const height = box[3];
+
+  ctx.strokeStyle = color;
+
+  ctx.lineWidth = 4;
+
+  ctx.strokeRect(
+    x,
+    y,
+    width,
+    height
+  );
+
+  ctx.fillStyle = color;
+
+  ctx.font = "bold 22px Arial";
+
+  ctx.fillText(
+    text,
+    x,
+    Math.max(25, y - 8)
+  );
+
+}
+
+
+/* =========================
+   تحديد منطقة الأذن
+========================= */
+
+function phoneNearEar(phone, face) {
+
+  if (!phone || !face) {
+    return false;
+  }
+
+  const fx = face[0];
+  const fy = face[1];
+
+  const fw = face[2];
+  const fh = face[3];
+
+  const px = phone[0];
+  const py = phone[1];
+
+  const pw = phone[2];
+  const ph = phone[3];
+
+
+  /* مركز الجوال */
+
+  const phoneX =
+    px + pw / 2;
+
+  const phoneY =
+    py + ph / 2;
+
+
+  /*
+    تقدير مكان الأذنين
+    بالنسبة إلى الوجه
+  */
+
+  const leftEarX =
+    fx + fw * 0.08;
+
+  const rightEarX =
+    fx + fw * 0.92;
+
+  const earY =
+    fy + fh * 0.55;
+
+
+  const distanceLeft =
+    Math.sqrt(
+      Math.pow(
+        (phoneX - leftEarX) / fw,
+        2
+      ) +
+      Math.pow(
+        (phoneY - earY) / fh,
+        2
+      )
+    );
+
+
+  const distanceRight =
+    Math.sqrt(
+      Math.pow(
+        (phoneX - rightEarX) / fw,
+        2
+      ) +
+      Math.pow(
+        (phoneY - earY) / fh,
+        2
+      )
+    );
+
+
+  const distance =
+    Math.min(
+      distanceLeft,
+      distanceRight
+    );
+
+
+  /*
+    يجب أن يكون الجوال
+    قريبًا من الوجه
+  */
+
+  return distance < 0.32;
+
+}
+
+
+/* =========================
+   تحليل الوجه
+========================= */
+
+async function detectFace() {
+
+  /*
+    FaceDetector متوفر
+    في بعض المتصفحات فقط.
+  */
+
+  if ("FaceDetector" in window) {
+
+    try {
+
+      const detector =
+        new FaceDetector({
+          fastMode: true,
+          maxDetectedFaces: 1
+        });
+
+      const faces =
+        await detector.detect(video);
+
+      if (faces.length > 0) {
+
+        const r =
+          faces[0].boundingBox;
+
+        return [
+          r.x,
+          r.y,
+          r.width,
+          r.height
+        ];
+
+      }
+
+    } catch (error) {
+
+      console.log(
+        "FaceDetector غير متوفر"
+      );
+
+    }
+
+  }
+
+
+  /*
+    تقدير احتياطي للوجه.
+    سيتم تحسينه لاحقًا باستخدام
+    Face Landmarks.
+  */
+
+  return [
+    canvas.width * 0.25,
+    canvas.height * 0.08,
+    canvas.width * 0.50,
+    canvas.height * 0.72
+  ];
+
+}
+
+
+/* =========================
+   تحليل الكاميرا
+========================= */
+
+async function analyze() {
+
+  if (!running) return;
+
+  try {
+
+    const predictions =
+      await model.detect(
+        video,
+        10
+      );
+
+
+    /*
+      البحث عن الجوال
+    */
+
+    const phones =
+      predictions.filter(
+        item =>
+          item.class === "cell phone" &&
+          item.score >= 0.40
+      );
+
+
+    let phone = null;
+
+    if (phones.length > 0) {
+
+      phones.sort(
+        (a, b) =>
+          b.score - a.score
+      );
+
+      phone =
+        phones[0].bbox;
+
+    }
+
+
+    /*
+      البحث عن الوجه
+    */
+
+    const face =
+      await detectFace();
+
+
+    /*
+      مسح الرسم السابق
+    */
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    /*
+      رسم الوجه
+    */
+
+    drawBox(
+      face,
+      "FACE",
+      "#00ff88"
+    );
+
+
+    /*
+      إذا وجد الجوال
+    */
+
+    if (phone) {
+
+      const near =
+        phoneNearEar(
+          phone,
+          face
+        );
+
+
+      if (near) {
+
+        drawBox(
+          phone,
+          "PHONE NEAR EAR",
+          "#ff2222"
+        );
+
+
+        nearCounter++;
+
+        safeCounter = 0;
+
+
+        /*
+          لا يشغل الإنذار
+          من أول إطار حتى لا
+          تحدث إنذارات خاطئة.
+        */
+
+        if (nearCounter >= 3) {
+
+          activateAlarm();
+
+        }
+
+
+      } else {
+
+        drawBox(
+          phone,
+          "PHONE",
+          "#ffff00"
+        );
+
+
+        safeCounter++;
+
+        nearCounter = 0;
+
+
+        if (safeCounter >= 4) {
+
+          deactivateAlarm();
+
+          normalStatus(
+            "تم اكتشاف الجوال وهو بعيد عن الأذن."
+          );
+
+        }
+
+      }
+
+    } else {
+
+      safeCounter++;
+
+      nearCounter = 0;
+
+      deactivateAlarm();
+
+      normalStatus(
+        "لم يتم اكتشاف الجوال بوضوح."
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+  }
+
+
+  /*
+    استمرار التحليل
+  */
+
+  if (running) {
+
+    setTimeout(
+      analyze,
+      250
+    );
+
+  }
+
+}
+
+
+/* =========================
+   بدء النظام
+========================= */
+
+async function startSystem() {
+
+  if (running) return;
+
+  try {
+
+    startButton.disabled = true;
+
+    loading.textContent =
+      "جارٍ تشغيل الكاميرا...";
+
+
+    /*
+      طلب الكاميرا
+    */
+
+    stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+
+          facingMode: "user",
+
+          width: {
+            ideal: 1280
+          },
+
+          height: {
+            ideal: 720
+          }
+
+        },
+
+        audio: false
+
+      });
+
+
+    video.srcObject = stream;
+
+
+    await video.play();
+
+
+    /*
+      ضبط حجم Canvas
+    */
+
+    canvas.width =
+      video.videoWidth || 1280;
+
+    canvas.height =
+      video.videoHeight || 720;
+
+
+    loading.textContent =
+      "جارٍ تحميل نموذج اكتشاف الجوال...";
+
+
+    /*
+      تحميل نموذج الذكاء الاصطناعي
+    */
+
+    model =
+      await cocoSsd.load();
+
+
+    running = true;
+
+
+    loading.textContent =
+      "النظام يعمل الآن.";
+
+
+    startButton.textContent =
+      "المراقبة تعمل";
+
+
+    normalStatus(
+      "وجّه الكاميرا نحوك مع ظهور الجوال."
+    );
+
+
+    analyze();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    startButton.disabled = false;
+
+
+    loading.textContent =
+      "تعذر تشغيل الكاميرا.";
+
+
+    if (
+      error.name ===
+      "NotAllowedError"
+    ) {
+
+      normalStatus(
+        "يجب السماح للموقع باستخدام الكاميرا."
+      );
+
+    } else {
+
+      normalStatus(
+        "حدث خطأ أثناء تشغيل النظام."
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =========================
+   زر البداية
+========================= */
+
+startButton.addEventListener(
+  "click",
+  startSystem
+);
+
+</script>
+
+</body>
 </html>
