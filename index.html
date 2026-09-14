@@ -1043,4 +1043,321 @@ async function processFrame(){
                 "الجوال قريب من الأذن — " +
                 "تأكيد " +
                 nearCounter + "/" +
-                REQUIRED_NEAR_FRAM
+REQUIRED_NEAR_FRAMES
+            );
+
+            if(
+                nearCounter >=
+                REQUIRED_NEAR_FRAMES
+            ){
+
+                if(!alarmActive){
+                    playAlarm();
+                }
+
+            }
+
+        }
+        else{
+
+            awayCounter++;
+            nearCounter = 0;
+
+            if(!alarmActive){
+
+                setStatus(
+                    "🟢 الوضع الطبيعي",
+                    "لم يتم تأكيد قرب الجوال من الأذن.",
+                    false
+                );
+
+            }
+
+            if(phone && face){
+
+                log(
+                    "الجوال والوجه مكتشفان، " +
+                    "لكن لم يتم تأكيد القرب."
+                );
+
+            }
+            else if(phone){
+
+                log(
+                    "تم اكتشاف الجوال، " +
+                    "بانتظار اكتشاف الوجه."
+                );
+
+            }
+            else{
+
+                log(
+                    "جارٍ البحث عن الجوال..."
+                );
+
+            }
+
+        }
+
+        /* إيقاف الإنذار بعد ابتعاد الجوال */
+
+        if(
+            alarmActive &&
+            awayCounter >= REQUIRED_AWAY_FRAMES
+        ){
+
+            stopAlarm();
+
+        }
+
+    }
+    catch(error){
+
+        console.error(
+            "Frame error:",
+            error
+        );
+
+        log(
+            "خطأ أثناء الكشف: " +
+            error.message
+        );
+
+    }
+
+    if(running){
+
+        loopId =
+            requestAnimationFrame(
+                processFrame
+            );
+
+    }
+
+}
+
+/* =====================================================
+   تشغيل الكاميرا
+===================================================== */
+
+async function startCamera(){
+
+    if(stream){
+        return;
+    }
+
+    if(
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ){
+
+        throw new Error(
+            "المتصفح لا يدعم تشغيل الكاميرا."
+        );
+
+    }
+
+    stream =
+        await navigator.mediaDevices.getUserMedia({
+
+            video:{
+                facingMode:"user",
+                width:{
+                    ideal:1280
+                },
+                height:{
+                    ideal:720
+                }
+            },
+
+            audio:false
+
+        });
+
+    video.srcObject = stream;
+
+    await video.play();
+
+    resizeCanvas();
+
+}
+
+/* =====================================================
+   إيقاف الكاميرا
+===================================================== */
+
+function stopCamera(){
+
+    if(stream){
+
+        stream.getTracks().forEach(
+            function(track){
+
+                track.stop();
+
+            }
+        );
+
+        stream = null;
+
+    }
+
+    video.srcObject = null;
+
+}
+
+/* =====================================================
+   بدء المراقبة
+===================================================== */
+
+async function startMonitoring(){
+
+    if(running){
+        return;
+    }
+
+    startButton.disabled = true;
+    stopButton.disabled = true;
+
+    setStatus(
+        "⏳ جاري التجهيز",
+        "جارٍ تشغيل الكاميرا وتحميل نماذج الذكاء الاصطناعي...",
+        false
+    );
+
+    try{
+
+        await startCamera();
+
+        await loadModels();
+
+        running = true;
+
+        alarmActive = false;
+        nearCounter = 0;
+        awayCounter = 0;
+        lastRun = 0;
+
+        startButton.disabled = true;
+        stopButton.disabled = false;
+
+        setStatus(
+            "🟢 المراقبة تعمل",
+            "وجّه الكاميرا نحو الشخص لبدء الكشف.",
+            false
+        );
+
+        log(
+            "بدأت المراقبة بنجاح."
+        );
+
+        processFrame();
+
+    }
+    catch(error){
+
+        console.error(error);
+
+        stopCamera();
+
+        running = false;
+
+        startButton.disabled = false;
+        stopButton.disabled = true;
+
+        setStatus(
+            "🔴 تعذر التشغيل",
+            error.message ||
+            "حدث خطأ أثناء تشغيل النظام.",
+            false
+        );
+
+        log(
+            "فشل التشغيل: " +
+            error.message
+        );
+
+    }
+
+}
+
+/* =====================================================
+   إيقاف المراقبة
+===================================================== */
+
+function stopMonitoring(){
+
+    running = false;
+
+    if(loopId){
+
+        cancelAnimationFrame(
+            loopId
+        );
+
+        loopId = null;
+
+    }
+
+    stopCamera();
+
+    stopAlarm();
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    startButton.disabled = false;
+    stopButton.disabled = true;
+
+    phoneState.textContent = "—";
+    faceState.textContent = "—";
+    handState.textContent = "—";
+    earState.textContent = "—";
+
+    setStatus(
+        "🟢 متوقف",
+        "اضغط «بدء المراقبة» للتشغيل.",
+        false
+    );
+
+    log(
+        "تم إيقاف المراقبة."
+    );
+
+}
+
+/* =====================================================
+   ربط الأزرار
+===================================================== */
+
+startButton.addEventListener(
+    "click",
+    startMonitoring
+);
+
+stopButton.addEventListener(
+    "click",
+    stopMonitoring
+);
+
+/* =====================================================
+   تنظيف عند مغادرة الصفحة
+===================================================== */
+
+window.addEventListener(
+    "beforeunload",
+    function(){
+
+        stopMonitoring();
+
+    }
+);
+
+</script>
+
+</body>
+</html>
